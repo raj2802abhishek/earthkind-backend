@@ -15,10 +15,14 @@ const app = express();
 
 
 // Middleware
-app.use(cors({
-  origin: "*",
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "https://earthkind-frontend.vercel.app"
+    ],
+    credentials: true
+  })
+);
 
 app.use(express.json());
 
