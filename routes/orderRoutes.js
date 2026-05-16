@@ -55,13 +55,14 @@ for (const item of savedOrder.products) {
 
     // REDUCE STOCK
     product.stock =
-      Math.max(
-        0,
-        product.stock - item.quantity
-      );
+  Math.max(
+    0,
+    (product.stock || 0) - item.quantity
+  );
 
     // INCREASE SOLD COUNT
-    product.sold += item.quantity;
+    product.sold =
+  (product.sold || 0) + item.quantity;
 
     await product.save();
     // LOW STOCK EMAIL ALERT
