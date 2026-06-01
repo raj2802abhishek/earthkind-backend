@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema(
+
   {
+
     name: {
       type: String,
       required: true
@@ -22,19 +24,79 @@ const productSchema = new mongoose.Schema(
       required: true
     },
 
+    /* ====================================
+       MAIN IMAGE
+    ==================================== */
+
     image: {
       type: String,
       required: true
     },
 
-    // INVENTORY
+    /* ====================================
+       MULTIPLE IMAGES
+    ==================================== */
+
+    images: {
+      type: [String],
+      default: []
+    },
+
+    /* ====================================
+       PRODUCT STORY
+    ==================================== */
+
+    story: {
+      type: String,
+      default: ""
+    },
+
+    /* ====================================
+       HOW TO USE
+    ==================================== */
+
+    howToUse: {
+      type: [String],
+      default: []
+    },
+
+    /* ====================================
+       BENEFITS
+    ==================================== */
+
+    benefits: {
+      type: [String],
+      default: []
+    },
+
+    /* ====================================
+       INGREDIENTS
+    ==================================== */
+
+    ingredients: {
+      type: [String],
+      default: []
+    },
+
+    /* ====================================
+       TAGS
+    ==================================== */
+
+    tags: {
+      type: [String],
+      default: []
+    },
+
+    /* ====================================
+       INVENTORY
+    ==================================== */
+
     stock: {
       type: Number,
       required: true,
       default: 0
     },
 
-    // PRODUCT ANALYTICS
     sold: {
       type: Number,
       default: 0
@@ -45,7 +107,10 @@ const productSchema = new mongoose.Schema(
       default: false
     },
 
-    // RATINGS
+    /* ====================================
+       RATINGS
+    ==================================== */
+
     rating: {
       type: Number,
       default: 0
@@ -55,14 +120,17 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0
     }
+
   },
 
   { timestamps: true }
+
 );
 
-const Product = mongoose.model(
-  "Product",
-  productSchema
-);
+const Product =
+  mongoose.model(
+    "Product",
+    productSchema
+  );
 
 module.exports = Product;

@@ -26,6 +26,22 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS
   }
 });
+const safeSendMail = async (mailOptions) => {
+
+  try {
+
+    await transporter.sendMail(mailOptions);
+
+  } catch (err) {
+
+    console.log(
+      "Email failed:",
+      err.message
+    );
+
+  }
+
+};
 
 
 // ===============================
@@ -35,6 +51,7 @@ const transporter = nodemailer.createTransport({
 router.post("/create", async (req, res) => {
 
   try {
+    
 
     const newOrder =
       new Order(req.body);
@@ -69,7 +86,7 @@ for (const item of savedOrder.products) {
 
 if (product.stock <= 5) {
 
-  await transporter.sendMail({
+  safeSendMail({
 
     from: process.env.EMAIL_USER,
 
@@ -156,7 +173,7 @@ if (product.stock <= 5) {
     // SEND ADMIN EMAIL
     // ===============================
 
-    await transporter.sendMail({
+    safeSendMail({
 
       from: process.env.EMAIL_USER,
 

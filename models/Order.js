@@ -22,13 +22,15 @@ const orderSchema = new mongoose.Schema(
   required: true
 },
 
-    products: [
-      {
-        name: String,
-        price: Number,
-        quantity: Number
-      }
-    ],
+  products: [
+  {
+    name: String,
+    price: Number,
+    quantity: Number,
+    image: String,
+    weight: String
+  }
+],
 
     totalAmount: {
       type: Number,
