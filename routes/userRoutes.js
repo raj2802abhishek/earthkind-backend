@@ -418,27 +418,40 @@ if (profileAlerts !== undefined) {
 
 
 
+
 // SEND EMAIL CHANGE OTP
 router.post(
   "/send-email-change-otp",
   authMiddleware,
   async (req, res) => {
+
     try {
+
+      console.log("EMAIL OTP ROUTE HIT");
+
+      console.log("REQ BODY:", req.body);
+
+      console.log("USER ID:", req.user?.id);
+
       const { email } = req.body;
 
       if (!email) {
+
         return res.status(400).json({
           message: "Email required"
         });
+
       }
 
       const existingUser =
         await User.findOne({ email });
 
       if (existingUser) {
+
         return res.status(400).json({
           message: "Email already in use"
         });
+
       }
 
       const otp =
@@ -450,30 +463,51 @@ router.post(
         await User.findById(req.user.id);
 
       if (!user) {
+
         return res.status(404).json({
           message: "User not found"
         });
+
       }
 
       user.emailOTP = otp;
+
       user.emailOTPExpire =
         Date.now() + 10 * 60 * 1000;
 
       await user.save();
 
       console.log("EMAIL OTP TO:", email);
+
       console.log("EMAIL OTP:", otp);
 
       await transporter.sendMail({
+
         from: process.env.EMAIL_USER,
+
         to: email,
+
         subject: "Verify Your New Email",
+
         html: `
           <div style="font-family:Arial;padding:20px;text-align:center;">
-            <h2 style="color:#234d2c;">Earthkind Naturals 🌿</h2>
-            <p>Your email verification OTP:</p>
-            <h1 style="letter-spacing:5px;">${otp}</h1>
-            <p>Valid for 10 minutes</p>
+
+            <h2 style="color:#234d2c;">
+              Earthkind Naturals 🌿
+            </h2>
+
+            <p>
+              Your email verification OTP:
+            </p>
+
+            <h1 style="letter-spacing:5px;">
+              ${otp}
+            </h1>
+
+            <p>
+              Valid for 10 minutes
+            </p>
+
           </div>
         `
       });
@@ -484,13 +518,26 @@ router.post(
       });
 
     } catch (error) {
-      console.log("SEND EMAIL CHANGE OTP ERROR:", error);
+
+      console.log(
+        "SEND EMAIL CHANGE OTP ERROR:"
+      );
+
+      console.log(error);
+
       return res.status(500).json({
-        message: error.message || "Mail send failed"
+
+        message:
+          error.message ||
+          "Mail send failed"
+
       });
+
     }
   }
 );
+
+
 
 
 module.exports = router;
