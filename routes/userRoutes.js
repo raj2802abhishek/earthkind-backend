@@ -416,4 +416,96 @@ if (profileAlerts !== undefined) {
   }
 );
 
+
+
+// SEND EMAIL CHANGE OTP
+router.post(
+  "/send-email-change-otp",
+  authMiddleware,
+  async (req, res) => {
+
+    try {
+
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          message: "Email required"
+        });
+      }
+
+      const existingUser =
+        await User.findOne({ email });
+
+      if (existingUser) {
+        return res.status(400).json({
+          message: "Email already in use"
+        });
+      }
+
+      const otp =
+        Math.floor(
+          100000 + Math.random() * 900000
+        ).toString();
+
+      const user =
+        await User.findById(req.user.id);
+
+      user.emailOTP = otp;
+
+      user.emailOTPExpire =
+        Date.now() + 10 * 60 * 1000;
+
+      await user.save();
+
+      await transporter.sendMail({
+
+        from: process.env.EMAIL_USER,
+
+        to: email,
+
+        subject: "Verify Your New Email",
+
+        html: `
+        <div style="font-family:Arial;padding:20px;text-align:center;">
+
+          <h2 style="color:#234d2c;">
+            Earthkind Naturals 🌿
+          </h2>
+
+          <p>
+            Your email verification OTP:
+          </p>
+
+          <h1 style="letter-spacing:5px;">
+            ${otp}
+          </h1>
+
+          <p>
+            Valid for 10 minutes
+          </p>
+
+        </div>
+        `
+      });
+
+      res.json({
+        success: true,
+        message: "OTP sent successfully"
+      });
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        message: "Server Error"
+      });
+
+    }
+  }
+);
+
+
+
 module.exports = router;
