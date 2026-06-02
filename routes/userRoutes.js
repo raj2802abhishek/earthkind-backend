@@ -423,9 +423,7 @@ router.post(
   "/send-email-change-otp",
   authMiddleware,
   async (req, res) => {
-
     try {
-
       const { email } = req.body;
 
       if (!email) {
@@ -451,61 +449,48 @@ router.post(
       const user =
         await User.findById(req.user.id);
 
-      user.emailOTP = otp;
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found"
+        });
+      }
 
+      user.emailOTP = otp;
       user.emailOTPExpire =
         Date.now() + 10 * 60 * 1000;
 
       await user.save();
 
+      console.log("EMAIL OTP TO:", email);
+      console.log("EMAIL OTP:", otp);
+
       await transporter.sendMail({
-
         from: process.env.EMAIL_USER,
-
         to: email,
-
         subject: "Verify Your New Email",
-
         html: `
-        <div style="font-family:Arial;padding:20px;text-align:center;">
-
-          <h2 style="color:#234d2c;">
-            Earthkind Naturals 🌿
-          </h2>
-
-          <p>
-            Your email verification OTP:
-          </p>
-
-          <h1 style="letter-spacing:5px;">
-            ${otp}
-          </h1>
-
-          <p>
-            Valid for 10 minutes
-          </p>
-
-        </div>
+          <div style="font-family:Arial;padding:20px;text-align:center;">
+            <h2 style="color:#234d2c;">Earthkind Naturals 🌿</h2>
+            <p>Your email verification OTP:</p>
+            <h1 style="letter-spacing:5px;">${otp}</h1>
+            <p>Valid for 10 minutes</p>
+          </div>
         `
       });
 
-      res.json({
+      return res.json({
         success: true,
         message: "OTP sent successfully"
       });
 
     } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-        message: "Server Error"
+      console.log("SEND EMAIL CHANGE OTP ERROR:", error);
+      return res.status(500).json({
+        message: error.message || "Mail send failed"
       });
-
     }
   }
 );
-
 
 
 module.exports = router;
