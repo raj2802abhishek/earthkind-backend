@@ -6,7 +6,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const transporter = require("../config/email");
+const resend = require("../config/email");
 
 
 const authMiddleware = async (req, res, next) => {
@@ -246,45 +246,41 @@ router.post("/send-otp", async (req, res) => {
 
     await user.save();
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Password Reset OTP",
+    
+await resend.emails.send({
+
+  from:
+    "Earthkind <onboarding@resend.dev>",
+
+  to: email,
+
+  subject:
+    "Verify Your New Email",
+
   html: `
-  <div style="font-family: Arial, sans-serif; text-align:center; padding:20px;">
+    <div style="font-family:Arial;padding:20px;text-align:center;">
 
-    <!-- LOGO -->
-    <img 
-      src="https://res.cloudinary.com/dzq3q5skk/image/upload/v1777744528/logo_3_khoyqd.png" 
-      alt="Earthkind Naturals"
-      style="width:120px;margin-bottom:10px;"
-    />
+      <h2 style="color:#234d2c;">
+        Earthkind Naturals 🌿
+      </h2>
 
-    <!-- BRAND NAME -->
-    <h2 style="color:#234d2c; margin:5px 0;">
-      Pure Nature, Pure Wellness 🌿
-    </h2>
+      <p>
+        Your verification OTP:
+      </p>
 
-    <p style="font-size:16px;">
-      Your password reset OTP is:
-    </p>
-    <!-- OTP -->
-    <h1 style="letter-spacing:6px; font-size:32px;">
-      ${otp}
-    </h1>
-    <p style="color:#555;">
-      This OTP is valid for 10 minutes
-    </p>
+      <h1 style="letter-spacing:5px;">
+        ${otp}
+      </h1>
 
-    <hr style="margin:10px 0;" />
+      <p>
+        Valid for 10 minutes
+      </p>
 
-    <small style="color:#888;">
-      If you didn’t request this, ignore this email
-    </small>
+    </div>
+  `
+});
 
-  </div>
-`
-    });
+
 
     res.json({ message: "OTP sent successfully" });
 

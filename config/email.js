@@ -1,33 +1,10 @@
-const nodemailer = require("nodemailer");
 
-const transporter = nodemailer.createTransport({
+const { Resend } = require("resend");
 
-  host: "smtp.gmail.com",
+const resend = new Resend(
+  process.env.RESEND_API_KEY
+);
 
-  port: 587,
+console.log("RESEND EMAIL SYSTEM READY");
 
-  secure: false,
-
-  requireTLS: true,
-
-  auth: {
-
-    user: process.env.EMAIL_USER,
-
-    pass: process.env.EMAIL_PASS
-
-  },
-
-  tls: {
-
-    rejectUnauthorized: false
-
-  },
-
-  family: 4
-
-});
-
-console.log("EMAIL CONFIG LOADED ON PORT 587");
-
-module.exports = transporter;
+module.exports = resend;
