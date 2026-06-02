@@ -8,6 +8,8 @@ const transporter = nodemailer.createTransport({
 
   secure: false,
 
+  requireTLS: true,
+
   auth: {
 
     user: process.env.EMAIL_USER,
@@ -20,23 +22,12 @@ const transporter = nodemailer.createTransport({
 
     rejectUnauthorized: false
 
-  }
+  },
+
+  family: 4
 
 });
 
-transporter.verify((error, success) => {
-
-  if (error) {
-
-    console.log("EMAIL CONFIG ERROR:");
-    console.log(error);
-
-  } else {
-
-    console.log("MAIL SERVER READY");
-
-  }
-
-});
+console.log("EMAIL CONFIG LOADED ON PORT 587");
 
 module.exports = transporter;
