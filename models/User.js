@@ -31,8 +31,40 @@ password: {
     default: false
   },
   resetOTP: Number,
-  resetOTPExpire: Date
+resetOTPExpire: Date,
 
+profileImage: {
+  type: String,
+  default: ""
+},
+
+emailVerified: {
+  type: Boolean,
+  default: true
+},
+
+phoneVerified: {
+  type: Boolean,
+  default: false
+},
+
+emailOTP: String,
+emailOTPExpire: Date,
+
+loginAlerts: {
+  type: Boolean,
+  default: true
+},
+
+profileAlerts: {
+  type: Boolean,
+  default: true
+},
+
+isBlocked: {
+  type: Boolean,
+  default: false
+}
   
   
 

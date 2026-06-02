@@ -1,9 +1,39 @@
 
 const express = require("express");
 const router = express.Router();
+
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+const transporter = require("../config/email");
+
+
+const authMiddleware = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({
+        message: "No token provided"
+      });
+    }
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    req.user = decoded;
+
+    next();
+
+  } catch (error) {
+    res.status(401).json({
+      message: "Invalid token"
+    });
+  }
+};
 
 
 // REGISTER USER
@@ -76,17 +106,40 @@ router.post("/login", async (req, res) => {
       }
     );
 
-   res.status(200).json({
+  
+res.status(200).json({
   message: "Login successful",
   token,
 
   user: {
-    name: user.name,
-    email: user.email,
+    _id: user._id,
+
+    name: user.name || "",
+
+    email: user.email || "",
+
+    phone: user.phone || "",
+
+    profileImage:
+      user.profileImage || "",
+
+    loginAlerts:
+      user.loginAlerts ?? true,
+
+    profileAlerts:
+      user.profileAlerts ?? true,
+
+    emailVerified:
+      user.emailVerified ?? true,
+
+    phoneVerified:
+      user.phoneVerified ?? false,
 
     isAdmin: user.isAdmin
   }
 });
+
+
 
   } catch (error) {
     res.status(500).json({
@@ -96,7 +149,7 @@ router.post("/login", async (req, res) => {
 });
 
 
-const transporter = require("../config/email");
+
 
 
 
@@ -302,5 +355,65 @@ router.get("/count", async (req, res) => {
   }
 
 });
+
+router.put(
+  "/update-profile",
+  authMiddleware,
+  async (req, res) => {
+    try {
+
+      const {
+        name,
+        phone,
+        profileImage,
+        loginAlerts,
+        profileAlerts
+      } = req.body;
+
+      const user = await User.findById(req.user.id);
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found"
+        });
+      }
+
+     if (name !== undefined) {
+  user.name = name;
+}
+
+if (phone !== undefined) {
+  user.phone = phone;
+}
+
+if (profileImage !== undefined) {
+  user.profileImage = profileImage;
+}
+
+if (loginAlerts !== undefined) {
+  user.loginAlerts = loginAlerts;
+}
+
+if (profileAlerts !== undefined) {
+  user.profileAlerts = profileAlerts;
+}
+      await user.save();
+
+      res.json({
+        success: true,
+        message: "Profile updated successfully",
+        user
+      });
+
+    } catch (error) {
+
+      console.log("UPDATE PROFILE ERROR:", error);
+
+      res.status(500).json({
+        message: "Server Error"
+      });
+    }
+  }
+);
 
 module.exports = router;
