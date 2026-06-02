@@ -6,8 +6,8 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const transporter =
-  require("../config/email");
+const resend =
+  require("../config/resend");
 
 
 const authMiddleware = async (req, res, next) => {
@@ -248,24 +248,24 @@ router.post("/send-otp", async (req, res) => {
     await user.save();
 
     
-await transporter.sendMail({
 
-from:
-`"Earthkind Naturals" <${process.env.EMAIL_USER}>`,
+await resend.emails.send({
 
-to: email,
+  from:
+    "Earthkind Naturals <onboarding@resend.dev>",
 
-subject:
-"Verify Your Email - Earthkind Naturals",
+  to: email,
 
-html: `
+  subject:
+    "Verify Your Email - Earthkind Naturals",
+
+  html: `
 
   <div style="
     background:#f5f7f4;
     padding:40px;
     font-family:Arial,sans-serif;
   ">
-
 
 <div style="
   max-width:540px;
@@ -350,12 +350,10 @@ html: `
 
 </div>
 
-
   </div>
 
 `
 });
-
 
 
     res.json({ message: "OTP sent successfully" });
@@ -553,23 +551,23 @@ router.post(
 
       console.log("EMAIL OTP:", otp);
 
-await transporter.sendMail({
+await resend.emails.send({
 
-from:
-`"Earthkind Naturals" <${process.env.EMAIL_USER}>`,
+  from:
+    "Earthkind Naturals <onboarding@resend.dev>",
 
-to: email,
+  to: email,
 
-subject: "Verify Your New Email",
+  subject:
+    "Verify Your New Email",
 
-html: `
+  html: `
 
   <div style="
     background:#f5f7f4;
     padding:40px;
     font-family:Arial,sans-serif;
   ">
-
 
 <div style="
   max-width:540px;
@@ -653,7 +651,6 @@ html: `
   </div>
 
 </div>
-
 
   </div>
 
