@@ -477,36 +477,38 @@ router.post(
 
       console.log("EMAIL OTP:", otp);
 
-      await transporter.sendMail({
+await resend.emails.send({
 
-        from: process.env.EMAIL_USER,
+  from:
+    "Earthkind <onboarding@resend.dev>",
 
-        to: email,
+  to: email,
 
-        subject: "Verify Your New Email",
+  subject:
+    "Verify Your New Email",
 
-        html: `
-          <div style="font-family:Arial;padding:20px;text-align:center;">
+  html: `
+    <div style="font-family:Arial;padding:20px;text-align:center;">
 
-            <h2 style="color:#234d2c;">
-              Earthkind Naturals 🌿
-            </h2>
+      <h2 style="color:#234d2c;">
+        Earthkind Naturals 🌿
+      </h2>
 
-            <p>
-              Your email verification OTP:
-            </p>
+      <p>
+        Your email verification OTP:
+      </p>
 
-            <h1 style="letter-spacing:5px;">
-              ${otp}
-            </h1>
+      <h1 style="letter-spacing:5px;">
+        ${otp}
+      </h1>
 
-            <p>
-              Valid for 10 minutes
-            </p>
+      <p>
+        Valid for 10 minutes
+      </p>
 
-          </div>
-        `
-      });
+    </div>
+  `
+});
 
       return res.json({
         success: true,
