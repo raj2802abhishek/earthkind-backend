@@ -250,36 +250,77 @@ router.post("/send-otp", async (req, res) => {
 await resend.emails.send({
 
   from:
-    "Earthkind <onboarding@resend.dev>",
+    "Earthkind Naturals <onboarding@resend.dev>",
 
   to: email,
 
   subject:
-    "Verify Your New Email",
+    "Your Earthkind Verification OTP",
 
   html: `
-    <div style="font-family:Arial;padding:20px;text-align:center;">
 
-      <h2 style="color:#234d2c;">
+  <div style="
+    font-family: Arial, sans-serif;
+    background:#f6f8f5;
+    padding:40px;
+    text-align:center;
+  ">
+
+    <div style="
+      max-width:520px;
+      margin:auto;
+      background:white;
+      border-radius:18px;
+      padding:35px;
+      border:1px solid #e7efe7;
+    ">
+
+      <h1 style="
+        color:#163923;
+        margin-bottom:10px;
+      ">
         Earthkind Naturals 🌿
-      </h2>
-
-      <p>
-        Your verification OTP:
-      </p>
-
-      <h1 style="letter-spacing:5px;">
-        ${otp}
       </h1>
 
-      <p>
-        Valid for 10 minutes
+      <p style="
+        color:#666;
+        font-size:15px;
+      ">
+        Verify your email address
       </p>
 
+      <div style="
+        margin:30px 0;
+        font-size:42px;
+        letter-spacing:10px;
+        font-weight:700;
+        color:#163923;
+      ">
+        ${otp}
+      </div>
+
+      <p style="
+        color:#777;
+        font-size:14px;
+      ">
+        This OTP is valid for 10 minutes.
+      </p>
+
+      <div style="
+        margin-top:30px;
+        font-size:12px;
+        color:#999;
+      ">
+        If you did not request this,
+        you can safely ignore this email.
+      </div>
+
     </div>
+
+  </div>
+
   `
 });
-
 
 
     res.json({ message: "OTP sent successfully" });
