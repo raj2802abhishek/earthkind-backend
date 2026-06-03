@@ -247,76 +247,79 @@ router.post("/send-otp", async (req, res) => {
 
     
 
-await transporter.sendMail({
 
-  from: `"Earthkind Naturals 🌿" <${process.env.EMAIL_USER}>`,
+const info = await transporter.sendMail({
+
+  from:
+    `"Earthkind Naturals 🌿" <${process.env.EMAIL_USER}>`,
 
   to: email,
 
-  subject: "Verify Your Email - Earthkind Naturals",
+  subject:
+    "Verify Your New Email - Earthkind Naturals",
 
   html: `
-  
+
     <div style="
-      font-family: Arial;
-      padding: 25px;
-      background: #f8f8f8;
+      font-family:Arial;
+      padding:30px;
+      background:#f5f7f4;
     ">
 
       <div style="
-        max-width: 500px;
-        margin: auto;
-        background: white;
-        border-radius: 14px;
-        padding: 30px;
+        max-width:520px;
+        margin:auto;
+        background:white;
+        border-radius:18px;
+        padding:40px;
+        border:1px solid #e8eee8;
       ">
 
         <h1 style="
-          color: #1d4d2f;
-          margin-bottom: 10px;
+          color:#163923;
+          margin-top:0;
         ">
           Earthkind Naturals 🌿
         </h1>
 
         <p style="
-          color: #444;
-          font-size: 15px;
+          font-size:16px;
+          color:#444;
         ">
-          Verify your new email address.
+          Your email verification OTP:
         </p>
 
         <div style="
-          margin: 30px 0;
-          text-align: center;
+          margin:30px 0;
+          font-size:42px;
+          letter-spacing:10px;
+          font-weight:700;
+          color:#163923;
+          text-align:center;
         ">
-
-          <div style="
-            display: inline-block;
-            padding: 16px 28px;
-            font-size: 32px;
-            font-weight: bold;
-            letter-spacing: 6px;
-            background: #eef8ee;
-            color: #1d4d2f;
-            border-radius: 12px;
-          ">
-            ${otp}
-          </div>
-
+          ${otp}
         </div>
 
         <p style="
-          color: #666;
-          font-size: 13px;
+          color:#777;
+          font-size:14px;
         ">
-          This OTP expires in 10 minutes.
+          This OTP is valid for 10 minutes.
         </p>
 
       </div>
 
     </div>
+
   `
 });
+
+console.log(
+  "MAIL SENT SUCCESSFULLY:",
+  info.response
+);
+
+
 
 
     res.json({ message: "OTP sent successfully" });
