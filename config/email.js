@@ -2,21 +2,17 @@ const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
 
-  host: "smtp.gmail.com",
+  host: "smtp-relay.brevo.com",
 
   port: 587,
 
   secure: false,
 
-  requireTLS: true,
-
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
 
-  tls: {
-    rejectUnauthorized: false
+    user: process.env.BREVO_SMTP_USER,
+
+    pass: process.env.BREVO_SMTP_PASS
   }
 });
 
@@ -24,11 +20,16 @@ transporter.verify((error, success) => {
 
   if (error) {
 
-    console.log("EMAIL ERROR:", error);
+    console.log(
+      "BREVO EMAIL ERROR:",
+      error
+    );
 
   } else {
 
-    console.log("EMAIL SERVER READY");
+    console.log(
+      "BREVO EMAIL SERVER READY"
+    );
   }
 });
 

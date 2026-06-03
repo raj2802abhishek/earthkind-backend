@@ -250,8 +250,7 @@ router.post("/send-otp", async (req, res) => {
 
 const info = await transporter.sendMail({
 
-  from:
-    `"Earthkind Naturals 🌿" <${process.env.EMAIL_USER}>`,
+ from: `"Earthkind Naturals 🌿" <no-reply@earthkindnaturals.shop>`,
 
   to: email,
 
@@ -520,7 +519,7 @@ router.post(
 
 await transporter.sendMail({
 
-  from: `"Earthkind Naturals 🌿" <${process.env.EMAIL_USER}>`,
+  from: `"Earthkind Naturals 🌿" <no-reply@earthkindnaturals.shop>`,
 
   to: email,
 
