@@ -6,9 +6,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-const resend =
-  require("../config/resend");
-
+const transporter = require("../config/email");
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -249,110 +247,75 @@ router.post("/send-otp", async (req, res) => {
 
     
 
-await resend.emails.send({
+await transporter.sendMail({
 
-  from:
-    "Earthkind Naturals <onboarding@resend.dev>",
+  from: `"Earthkind Naturals 🌿" <${process.env.EMAIL_USER}>`,
 
   to: email,
 
-  subject:
-    "Verify Your Email - Earthkind Naturals",
+  subject: "Verify Your Email - Earthkind Naturals",
 
   html: `
-
-  <div style="
-    background:#f5f7f4;
-    padding:40px;
-    font-family:Arial,sans-serif;
-  ">
-
-<div style="
-  max-width:540px;
-  margin:auto;
-  background:#ffffff;
-  border-radius:24px;
-  overflow:hidden;
-  border:1px solid #e8efe8;
-">
-
-  <div style="
-    background:linear-gradient(135deg,#163923,#285b37);
-    padding:35px;
-    text-align:center;
-    color:white;
-  ">
-
-    <h1 style="
-      margin:0;
-      font-size:32px;
-    ">
-      Earthkind Naturals 🌿
-    </h1>
-
-    <p style="
-      margin-top:10px;
-      opacity:.9;
-      font-size:15px;
-    ">
-      Secure Email Verification
-    </p>
-
-  </div>
-
-  <div style="padding:40px;">
-
-    <h2 style="
-      color:#163923;
-      margin-top:0;
-    ">
-      Verify Your Email
-    </h2>
-
-    <p style="
-      color:#555;
-      line-height:1.7;
-      font-size:15px;
-    ">
-      Use the verification code below
-      to securely verify your account.
-    </p>
-
+  
     <div style="
-      margin:35px 0;
-      text-align:center;
+      font-family: Arial;
+      padding: 25px;
+      background: #f8f8f8;
     ">
 
       <div style="
-        display:inline-block;
-        background:#f3f8f3;
-        border:1px solid #dbe8db;
-        border-radius:18px;
-        padding:22px 36px;
-        font-size:42px;
-        letter-spacing:10px;
-        font-weight:700;
-        color:#163923;
+        max-width: 500px;
+        margin: auto;
+        background: white;
+        border-radius: 14px;
+        padding: 30px;
       ">
-        ${otp}
+
+        <h1 style="
+          color: #1d4d2f;
+          margin-bottom: 10px;
+        ">
+          Earthkind Naturals 🌿
+        </h1>
+
+        <p style="
+          color: #444;
+          font-size: 15px;
+        ">
+          Verify your new email address.
+        </p>
+
+        <div style="
+          margin: 30px 0;
+          text-align: center;
+        ">
+
+          <div style="
+            display: inline-block;
+            padding: 16px 28px;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 6px;
+            background: #eef8ee;
+            color: #1d4d2f;
+            border-radius: 12px;
+          ">
+            ${otp}
+          </div>
+
+        </div>
+
+        <p style="
+          color: #666;
+          font-size: 13px;
+        ">
+          This OTP expires in 10 minutes.
+        </p>
+
       </div>
 
     </div>
-
-    <p style="
-      color:#777;
-      font-size:14px;
-    ">
-      This OTP expires in 10 minutes.
-    </p>
-
-  </div>
-
-</div>
-
-  </div>
-
-`
+  `
 });
 
 
@@ -551,15 +514,14 @@ router.post(
 
       console.log("EMAIL OTP:", otp);
 
-await resend.emails.send({
 
-  from:
-    "Earthkind Naturals <onboarding@resend.dev>",
+await transporter.sendMail({
+
+  from: `"Earthkind Naturals 🌿" <${process.env.EMAIL_USER}>`,
 
   to: email,
 
-  subject:
-    "Verify Your New Email",
+  subject: "Verify Your New Email - Earthkind Naturals",
 
   html: `
 
@@ -656,6 +618,7 @@ await resend.emails.send({
 
 `
 });
+
 
 
       return res.json({
