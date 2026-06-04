@@ -117,6 +117,7 @@ const couponCode =
 `RW${Date.now()}`
 .slice(-10);
 
+
 const coupon =
 await Coupon.create({
 
@@ -131,7 +132,6 @@ await Coupon.create({
   rewardCoupon: true,
 
   ownerEmail: email
-
 });
 
 res.json({
