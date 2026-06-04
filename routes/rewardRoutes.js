@@ -69,6 +69,9 @@ pointsRequired,
 couponValue
 } = req.body;
 
+console.log("EMAIL RECEIVED:", email);
+console.log("BODY:", req.body);
+
 const reward =
 await Reward.findOne({
 email
