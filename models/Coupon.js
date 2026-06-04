@@ -29,7 +29,7 @@ rewardCoupon: {
   default: false
 },
 
-oownerEmail: {
+ownerEmail: {
   type: String,
   default: ""
 },

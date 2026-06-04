@@ -120,7 +120,7 @@ const couponCode =
 `RW${Date.now()}`
 .slice(-10);
 
-
+console.log("CREATING COUPON FOR:", email);
 const coupon =
 await Coupon.create({
 
