@@ -120,14 +120,17 @@ const couponCode =
 const coupon =
 await Coupon.create({
 
-code: couponCode,
+  code: couponCode,
 
-discount:
-couponValue,
+  discount: couponValue,
 
-type: "fixed",
+  type: "fixed",
 
-isActive: true
+  isActive: true,
+
+  rewardCoupon: true,
+
+  ownerEmail: email
 
 });
 

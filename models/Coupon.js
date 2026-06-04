@@ -29,9 +29,35 @@ rewardCoupon: {
   default: false
 },
 
-ownerEmail: {
+oownerEmail: {
   type: String,
   default: ""
+},
+
+expiresAt: {
+
+  type: Date,
+
+  default: () => {
+
+    const date =
+      new Date();
+
+    date.setDate(
+      date.getDate() + 30
+    );
+
+    return date;
+
+  }
+
+},
+used: {
+
+  type: Boolean,
+
+  default: false
+
 }
   },
   {

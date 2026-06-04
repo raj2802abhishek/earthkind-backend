@@ -44,6 +44,39 @@ router.get("/", async (req, res) => {
 });
 
 
+
+router.get(
+  "/user/:email",
+
+  async (req, res) => {
+
+    try {
+
+      const coupons =
+        await Coupon.find({
+
+          ownerEmail:
+            req.params.email
+
+        }).sort({
+          createdAt: -1
+        });
+
+      res.json(coupons);
+
+    } catch (error) {
+
+      res.status(500).json({
+        message:
+          error.message
+      });
+
+    }
+
+  }
+);
+
+
 // DELETE COUPON
 router.delete("/:id", async (req, res) => {
   try {
