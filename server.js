@@ -9,7 +9,9 @@ const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const couponRoutes = require("./routes/couponRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
-
+const Reward = require("./models/Reward");
+const rewardRoutes =
+require("./routes/rewardRoutes");
 const app = express();
 
 
@@ -35,6 +37,10 @@ app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use(
+  "/api/rewards",
+  rewardRoutes
+);
 
 
 

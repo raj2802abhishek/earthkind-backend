@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const User = require("../models/User");
+const Reward = require("../models/Reward");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -57,6 +58,25 @@ router.post("/register", async (req, res) => {
     });
 
     await newUser.save();
+    await Reward.create({
+  email,
+
+  points: 100,
+
+  lifetimeEarned: 100,
+
+  tier: "Bronze",
+
+  transactions: [
+    {
+      title: "Welcome Bonus",
+
+      points: 100,
+
+      type: "signup"
+    }
+  ]
+});
 
     res.status(201).json({
       message: "User registered successfully"
@@ -93,6 +113,64 @@ router.post("/login", async (req, res) => {
         message: "Invalid credentials"
       });
     }
+    let reward =
+await Reward.findOne({
+  email: user.email
+});
+
+if (reward) {
+
+  const today =
+    new Date().toDateString();
+
+  const lastReward =
+    reward.lastLoginReward
+      ? new Date(
+          reward.lastLoginReward
+        ).toDateString()
+      : null;
+
+  if (today !== lastReward) {
+
+    reward.points += 5;
+
+    reward.lifetimeEarned += 5;
+    if (
+  reward.lifetimeEarned >= 5000
+) {
+  reward.tier = "Platinum";
+}
+
+else if (
+  reward.lifetimeEarned >= 2500
+) {
+  reward.tier = "Gold";
+}
+
+else if (
+  reward.lifetimeEarned >= 1000
+) {
+  reward.tier = "Silver";
+}
+
+else {
+  reward.tier = "Bronze";
+}
+
+    reward.lastLoginReward =
+      new Date();
+
+    reward.transactions.unshift({
+      title: "Daily Login Bonus",
+
+      points: 5,
+
+      type: "login"
+    });
+
+    await reward.save();
+  }
+}
 
     const token = jwt.sign(
       {
