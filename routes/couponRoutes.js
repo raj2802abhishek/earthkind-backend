@@ -2,6 +2,13 @@ const express = require("express");
 const router = express.Router();
 const Coupon = require("../models/Coupon");
 
+router.get("/test", (req, res) => {
+  res.json({
+    success: true,
+    message: "Coupon Route Working"
+  });
+});
+
 
 // CREATE COUPON
 router.post("/", async (req, res) => {
