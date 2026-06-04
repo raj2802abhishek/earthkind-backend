@@ -3,6 +3,7 @@ const router = express.Router();
 
 const Order = require("../models/Order");
 const Product = require("../models/product");
+const Reward = require("../models/Reward");
 
 const Razorpay = require("razorpay");
 
@@ -58,6 +59,90 @@ router.post("/create", async (req, res) => {
 
     const savedOrder =
       await newOrder.save();
+
+      // ===============================
+// REWARD POINTS SYSTEM
+// ===============================
+
+const rewardAccount =
+  await Reward.findOne({
+    email: savedOrder.email
+  });
+
+if (rewardAccount) {
+
+  const totalOrders =
+    await Order.countDocuments({
+      email: savedOrder.email
+    });
+
+  // FIRST PURCHASE BONUS
+
+  if (totalOrders === 1) {
+
+    rewardAccount.points += 100;
+
+    rewardAccount.lifetimeEarned += 100;
+
+    rewardAccount.transactions.push({
+      title: "First Purchase Bonus",
+      points: 100,
+      type: "purchase"
+    });
+
+  }
+
+  // PURCHASE CASHBACK
+
+  const cashbackPoints =
+    Math.floor(
+      savedOrder.finalAmount / 100
+    ) * 5;
+
+  if (cashbackPoints > 0) {
+
+    rewardAccount.points += cashbackPoints;
+
+    rewardAccount.lifetimeEarned += cashbackPoints;
+
+    rewardAccount.transactions.push({
+      title: `Order Cashback (${savedOrder._id.slice(-6)})`,
+      points: cashbackPoints,
+      type: "purchase"
+    });
+
+  }
+
+  // MEMBERSHIP TIERS
+
+if (rewardAccount.lifetimeEarned >= 5000) {
+
+  rewardAccount.tier = "Platinum";
+
+}
+else if (
+  rewardAccount.lifetimeEarned >= 2500
+) {
+
+  rewardAccount.tier = "Gold";
+
+}
+else if (
+  rewardAccount.lifetimeEarned >= 1000
+) {
+
+  rewardAccount.tier = "Silver";
+
+}
+else {
+
+  rewardAccount.tier = "Bronze";
+
+}
+
+  await rewardAccount.save();
+
+}
 
       // UPDATE PRODUCT STOCK + SOLD
 

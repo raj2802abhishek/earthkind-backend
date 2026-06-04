@@ -19,10 +19,20 @@ const couponSchema = new mongoose.Schema(
       default: "fixed"
     },
 
-    isActive: {
-      type: Boolean,
-      default: true
-    }
+   isActive: {
+  type: Boolean,
+  default: true
+},
+
+rewardCoupon: {
+  type: Boolean,
+  default: false
+},
+
+ownerEmail: {
+  type: String,
+  default: ""
+}
   },
   {
     timestamps: true
