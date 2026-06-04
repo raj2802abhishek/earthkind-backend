@@ -250,7 +250,29 @@ router.post("/send-phone-otp", async (req, res) => {
     user.phoneOTP = otp;
     user.phoneOTPExpire = Date.now() + 10 * 60 * 1000; // 10 min
     await user.save();
+const Reward =
+require("../models/Reward");
 
+await Reward.create({
+  email: user.email,
+
+  points: 100,
+
+  lifetimeEarned: 100,
+
+  tier: "Bronze",
+
+  transactions: [
+    {
+      title:
+        "Welcome Bonus",
+
+      points: 100,
+
+      type: "signup"
+    }
+  ]
+});
     console.log("PHONE OTP:", otp); // 🔥 TEST MODE
 
     res.json({ message: "OTP sent (check server console)" });
