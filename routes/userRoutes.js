@@ -349,71 +349,141 @@ router.get("/me", authMiddleware, async (req, res) => {
 
 
 
-// SEND PHONE OTP (TEST MODE)
+// DIRECT PHONE AUTHENTICATION / LOGIN (NO OTP STEP)
 router.post("/send-phone-otp", async (req, res) => {
   try {
-    const { phone } = req.body;
+    const { phone, name } = req.body;
 
     if (!phone) {
-      return res.status(400).json({ message: "Phone required" });
+      return res.status(400).json({ message: "Mobile number is required" });
     }
 
-    // create or find user
-    let user = await User.findOne({ phone });
+    const cleanPhone = String(phone).trim();
+    let user = await User.findOne({ phone: cleanPhone });
+
     if (!user) {
-      user = new User({ phone, name: "User" });
+      user = new User({
+        phone: cleanPhone,
+        name: name?.trim() || "Customer",
+        phoneVerified: true
+      });
+    } else {
+      if (name && (!user.name || user.name === "User" || user.name === "Customer")) {
+        user.name = name.trim();
+      }
+      user.phoneVerified = true;
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    user.phoneOTP = otp;
-    user.phoneOTPExpire = Date.now() + 10 * 60 * 1000; // 10 min
     await user.save();
 
-    console.log("PHONE OTP:", otp); // 🔥 TEST MODE
+    const token = jwt.sign(
+      { id: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET || "earthkind_secret_key_12345",
+      { expiresIn: "7d" }
+    );
 
-    res.json({ message: "OTP sent (check server console)" });
+    res.json({
+      message: "Authentication successful",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name || "Customer",
+        email: user.email || "",
+        phone: user.phone || "",
+        profileImage: user.profileImage || "",
+        isAdmin: Boolean(user.isAdmin)
+      }
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: err.message || "Phone authentication failed" });
+  }
+});
+
+// DIRECT PHONE LOGIN ROUTE
+router.post("/phone-login", async (req, res) => {
+  try {
+    const { phone, name } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({ message: "Mobile number is required" });
+    }
+
+    const cleanPhone = String(phone).trim();
+    let user = await User.findOne({ phone: cleanPhone });
+
+    if (!user) {
+      user = new User({
+        phone: cleanPhone,
+        name: name?.trim() || "Customer",
+        phoneVerified: true
+      });
+    } else {
+      if (name && (!user.name || user.name === "User" || user.name === "Customer")) {
+        user.name = name.trim();
+      }
+      user.phoneVerified = true;
+    }
+
+    await user.save();
+
+    const token = jwt.sign(
+      { id: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET || "earthkind_secret_key_12345",
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name || "Customer",
+        email: user.email || "",
+        phone: user.phone || "",
+        profileImage: user.profileImage || "",
+        isAdmin: Boolean(user.isAdmin)
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Phone login failed" });
   }
 });
 
 // VERIFY PHONE OTP
 router.post("/verify-phone-otp", async (req, res) => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, otp, name } = req.body;
 
-    const user = await User.findOne({ phone });
+    let user = await User.findOne({ phone });
 
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
-    }
-
-    if (
-      user.phoneOTP !== otp ||
-      user.phoneOTPExpire < Date.now()
-    ) {
-      return res.status(400).json({
-        message: "Invalid or expired OTP"
+      user = new User({
+        phone: phone.trim(),
+        name: name?.trim() || "Customer",
+        phoneVerified: true
       });
+    } else if (name && (!user.name || user.name === "User" || user.name === "Customer")) {
+      user.name = name.trim();
     }
-
-    user.phoneOTP = undefined;
-    user.phoneOTPExpire = undefined;
 
     await user.save();
 
     const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
+      { id: user._id, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET || "earthkind_secret_key_12345",
       { expiresIn: "7d" }
     );
 
     res.json({
       token,
       user: {
-        name: user.name || "User",
-        phone: user.phone
+        _id: user._id,
+        name: user.name || "Customer",
+        email: user.email || "",
+        phone: user.phone || "",
+        profileImage: user.profileImage || "",
+        isAdmin: Boolean(user.isAdmin)
       }
     });
 
