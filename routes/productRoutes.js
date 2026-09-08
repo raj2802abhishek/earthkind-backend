@@ -9,8 +9,23 @@ router.post("/add", async (req, res) => {
 
   try {
 
+    const body = { ...req.body };
+    const gallery = Array.isArray(body.images)
+      ? body.images.filter(Boolean)
+      : [];
+
+    if (!body.image && gallery.length) {
+      body.image = gallery[0];
+    }
+
+    if (body.image && !gallery.includes(body.image)) {
+      body.images = [body.image, ...gallery];
+    } else {
+      body.images = gallery;
+    }
+
     const newProduct =
-      new Product(req.body);
+      new Product(body);
 
     const savedProduct =
       await newProduct.save();
@@ -36,7 +51,7 @@ router.get("/", async (req, res) => {
   try {
 
     const products =
-      await Product.find();
+      await Product.find().sort({ createdAt: -1 });
 
     res.status(200).json(
       products
@@ -100,7 +115,7 @@ router.put(
             price: req.body.price
           },
 
-          { new: true }
+          { new: true, returnDocument: "after" }
 
         );
 
@@ -137,7 +152,7 @@ router.put(
             stock: req.body.stock
           },
 
-          { new: true }
+          { new: true, returnDocument: "after" }
 
         );
 

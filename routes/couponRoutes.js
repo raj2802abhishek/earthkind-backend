@@ -15,10 +15,25 @@ router.post("/", async (req, res) => {
   try {
     const { code, discount, type } = req.body;
 
+    if (!code || discount === undefined || discount === "") {
+      return res.status(400).json({
+        message: "Coupon code and discount amount are required"
+      });
+    }
+
+    const formattedCode = String(code).trim().toUpperCase();
+
+    const existingCoupon = await Coupon.findOne({ code: formattedCode });
+    if (existingCoupon) {
+      return res.status(400).json({
+        message: `Coupon code '${formattedCode}' already exists`
+      });
+    }
+
     const newCoupon = new Coupon({
-      code,
-      discount,
-      type
+      code: formattedCode,
+      discount: Number(discount),
+      type: type || "fixed"
     });
 
     await newCoupon.save();
@@ -29,7 +44,7 @@ router.post("/", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Error creating coupon",
+      message: error.message || "Error creating coupon",
       error
     });
   }

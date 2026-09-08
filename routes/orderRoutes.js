@@ -61,198 +61,106 @@ router.post("/create", async (req, res) => {
       await newOrder.save();
 
       // ===============================
-// REWARD POINTS SYSTEM
-// ===============================
+      // REWARD POINTS SYSTEM (FAIL-SAFE)
+      // ===============================
+      try {
+        if (savedOrder.email) {
+          const rewardAccount = await Reward.findOne({ email: savedOrder.email });
+          if (rewardAccount) {
+            const totalOrders = await Order.countDocuments({ email: savedOrder.email });
 
-const rewardAccount =
-  await Reward.findOne({
-    email: savedOrder.email
-  });
+            if (totalOrders === 1) {
+              rewardAccount.points += 100;
+              rewardAccount.lifetimeEarned += 100;
+              rewardAccount.transactions.push({
+                title: "First Purchase Bonus",
+                points: 100,
+                type: "purchase"
+              });
+            }
 
-if (rewardAccount) {
+            const cashbackPoints = Math.floor(savedOrder.finalAmount / 100) * 5;
+            if (cashbackPoints > 0) {
+              rewardAccount.points += cashbackPoints;
+              rewardAccount.lifetimeEarned += cashbackPoints;
+              rewardAccount.transactions.push({
+                title: `Order Cashback (${String(savedOrder._id).slice(-6)})`,
+                points: cashbackPoints,
+                type: "purchase"
+              });
+            }
 
-  const totalOrders =
-    await Order.countDocuments({
-      email: savedOrder.email
-    });
+            if (rewardAccount.lifetimeEarned >= 5000) {
+              rewardAccount.tier = "Platinum";
+            } else if (rewardAccount.lifetimeEarned >= 2500) {
+              rewardAccount.tier = "Gold";
+            } else if (rewardAccount.lifetimeEarned >= 1000) {
+              rewardAccount.tier = "Silver";
+            } else {
+              rewardAccount.tier = "Bronze";
+            }
 
-  // FIRST PURCHASE BONUS
+            await rewardAccount.save();
+          }
+        }
+      } catch (rewardErr) {
+        console.log("Reward system non-critical error:", rewardErr.message);
+      }
 
-  if (totalOrders === 1) {
+      // ===============================
+      // REAL-TIME PRODUCT STOCK DEDUCTION
+      // ===============================
+      if (Array.isArray(savedOrder.products)) {
+        for (const item of savedOrder.products) {
+          let product = null;
+          if (item._id) {
+            try {
+              product = await Product.findById(item._id);
+            } catch (err) {
+              // Ignore invalid ObjectId cast errors
+            }
+          }
+          if (!product && item.name) {
+            const escapedName = item.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            product = await Product.findOne({ name: new RegExp("^" + escapedName + "$", "i") });
+          }
+          if (!product && item.name) {
+            product = await Product.findOne({ name: { $regex: item.name, $options: "i" } });
+          }
 
-    rewardAccount.points += 100;
+          if (product) {
+            const qty = Number(item.quantity || 1);
+            product.stock = Math.max(0, (product.stock || 0) - qty);
+            product.sold = (product.sold || 0) + qty;
+            await product.save();
+            console.log(`[REALTIME STOCK UPDATE] ${product.name} - New Stock: ${product.stock}, Sold: ${product.sold}`);
 
-    rewardAccount.lifetimeEarned += 100;
-
-    rewardAccount.transactions.push({
-      title: "First Purchase Bonus",
-      points: 100,
-      type: "purchase"
-    });
-
-  }
-
-  // PURCHASE CASHBACK
-
-  const cashbackPoints =
-    Math.floor(
-      savedOrder.finalAmount / 100
-    ) * 5;
-
-  if (cashbackPoints > 0) {
-
-    rewardAccount.points += cashbackPoints;
-
-    rewardAccount.lifetimeEarned += cashbackPoints;
-
-    rewardAccount.transactions.push({
-      title: `Order Cashback (${savedOrder._id.slice(-6)})`,
-      points: cashbackPoints,
-      type: "purchase"
-    });
-
-  }
-
-  // MEMBERSHIP TIERS
-
-if (rewardAccount.lifetimeEarned >= 5000) {
-
-  rewardAccount.tier = "Platinum";
-
-}
-else if (
-  rewardAccount.lifetimeEarned >= 2500
-) {
-
-  rewardAccount.tier = "Gold";
-
-}
-else if (
-  rewardAccount.lifetimeEarned >= 1000
-) {
-
-  rewardAccount.tier = "Silver";
-
-}
-else {
-
-  rewardAccount.tier = "Bronze";
-
-}
-
-  await rewardAccount.save();
-
-}
-
-      // UPDATE PRODUCT STOCK + SOLD
-
-for (const item of savedOrder.products) {
-
-  const product =
-    await Product.findOne({
-      name: item.name
-    });
-
-  if (product) {
-
-    // REDUCE STOCK
-    product.stock =
-  Math.max(
-    0,
-    (product.stock || 0) - item.quantity
-  );
-
-    // INCREASE SOLD COUNT
-    product.sold =
-  (product.sold || 0) + item.quantity;
-
-    await product.save();
-    // LOW STOCK EMAIL ALERT
-
-if (product.stock <= 5) {
-
-  safeSendMail({
-
-    from: process.env.EMAIL_USER,
-
-    to: process.env.EMAIL_USER,
-
-    subject:
-      `⚠ Low Stock Alert - ${product.name}`,
-
-    html: `
-
-      <div style="
-        font-family: Arial;
-        padding: 24px;
-        background: #f9fafb;
-      ">
-
-        <div style="
-          background: white;
-          border-radius: 18px;
-          padding: 24px;
-          box-shadow:
-            0 4px 18px rgba(0,0,0,0.06);
-        ">
-
-          <h1 style="
-            color:#dc2626;
-            margin-bottom:10px;
-          ">
-            ⚠ Low Stock Alert
-          </h1>
-
-          <p>
-            A product inventory is running low.
-          </p>
-
-          <hr />
-
-          <h2>
-            Product Details
-          </h2>
-
-          <p>
-            <strong>Product:</strong>
-            ${product.name}
-          </p>
-
-          <p>
-            <strong>Category:</strong>
-            ${product.category}
-          </p>
-
-          <p>
-            <strong>Stock Left:</strong>
-            ${product.stock}
-          </p>
-
-          <p>
-            Please restock this product soon.
-          </p>
-
-          <div style="
-            margin-top:24px;
-            color:#6b7280;
-          ">
-
-            Earthkind Naturals
-            Inventory System
-
-          </div>
-
-        </div>
-
-      </div>
-
-    `
-  });
-
-}
-  }
-}
-
+            // LOW STOCK EMAIL ALERT
+            if (product.stock <= 5) {
+              safeSendMail({
+                from: process.env.EMAIL_USER,
+                to: process.env.EMAIL_USER,
+                subject: `⚠ Low Stock Alert - ${product.name}`,
+                html: `
+                  <div style="font-family: Arial; padding: 24px; background: #f9fafb;">
+                    <div style="background: white; border-radius: 18px; padding: 24px; box-shadow: 0 4px 18px rgba(0,0,0,0.06);">
+                      <h1 style="color:#dc2626; margin-bottom:10px;">⚠ Low Stock Alert</h1>
+                      <p>A product inventory is running low.</p>
+                      <hr />
+                      <h2>Product Details</h2>
+                      <p><strong>Product:</strong> ${product.name}</p>
+                      <p><strong>Category:</strong> ${product.category}</p>
+                      <p><strong>Stock Left:</strong> ${product.stock}</p>
+                      <p>Please restock this product soon.</p>
+                      <div style="margin-top:24px; color:#6b7280;">Earthkind Naturals Inventory System</div>
+                    </div>
+                  </div>
+                `
+              });
+            }
+          }
+        }
+      }
 
     // ===============================
     // SEND ADMIN EMAIL
@@ -503,7 +411,7 @@ router.put("/update/:id", async (req, res) => {
       await Order.findByIdAndUpdate(
         req.params.id,
         updateData,
-        { new: true }
+        { new: true, returnDocument: "after" }
       );
 
     res.json(updatedOrder);
@@ -519,18 +427,12 @@ router.put("/update/:id", async (req, res) => {
 });
 
 
-// ===============================
-// RAZORPAY CONFIG
-// ===============================
-
-const razorpay = new Razorpay({
-
-  key_id:
-    process.env.RAZORPAY_KEY_ID,
-
-  key_secret:
-    process.env.RAZORPAY_KEY_SECRET
-});
+const getRazorpay = () => {
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_SjotFbSI2cLHpy",
+    key_secret: process.env.RAZORPAY_KEY_SECRET || "jUsaiS6DiEEFIPIn0CrQUe5V"
+  });
+};
 
 
 // ===============================
@@ -554,7 +456,7 @@ router.post("/razorpay", async (req, res) => {
     };
 
     const order =
-      await razorpay.orders.create(options);
+      await getRazorpay().orders.create(options);
 
     res.json(order);
 
@@ -618,27 +520,27 @@ router.post("/verify", (req, res) => {
 
 
 // ===============================
-// GET USER ORDERS
+// GET USER ORDERS (STRICT EMAIL FILTER)
 // ===============================
-
 router.get("/my-orders/:email", async (req, res) => {
-
   try {
+    const rawEmail = req.params.email;
+    if (!rawEmail || rawEmail === "undefined" || rawEmail === "null") {
+      return res.json([]);
+    }
 
-    const orders =
-      await Order.find({
+    const cleanEmail = rawEmail.trim().toLowerCase();
+    const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-        email:
-          req.params.email
-
-      }).sort({
-        createdAt: -1
-      });
+    const orders = await Order.find({
+      email: new RegExp("^" + escapedEmail + "$", "i")
+    }).sort({
+      createdAt: -1
+    });
 
     res.json(orders);
 
   } catch (error) {
-
     res.status(500).json({
       message: error.message
     });
