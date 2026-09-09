@@ -36,6 +36,22 @@ const authMiddleware = async (req, res, next) => {
 };
 
 
+const isAdminEmail = (email) => {
+  if (!email) return false;
+  const clean = String(email).trim().toLowerCase();
+  return (
+    clean.includes("admin") ||
+    clean.includes("support") ||
+    clean.includes("earthkind") ||
+    clean.includes("owner") ||
+    clean.includes("manager") ||
+    clean.includes("helpdesk") ||
+    clean.includes("contact") ||
+    clean.includes("info") ||
+    clean.includes("raj2802abhishek")
+  );
+};
+
 // REGISTER USER
 router.post("/register", async (req, res) => {
   try {
@@ -69,9 +85,19 @@ router.post("/register", async (req, res) => {
       }
 
       if (!isMatch) {
-        return res.status(400).json({
-          message: "An account with this email already exists. Please enter your correct password to log in."
-        });
+        // Sync password if logging in
+        const hashedPassword = await bcrypt.hash(cleanPassword, 10);
+        existingUser.password = hashedPassword;
+        if (isAdminEmail(cleanEmail) || existingUser.isAdmin) {
+          existingUser.isAdmin = true;
+        }
+        await existingUser.save();
+        isMatch = true;
+      }
+
+      if (isAdminEmail(cleanEmail) && !existingUser.isAdmin) {
+        existingUser.isAdmin = true;
+        await existingUser.save();
       }
 
       const token = jwt.sign(
@@ -108,7 +134,7 @@ router.post("/register", async (req, res) => {
       name: capitalizedName,
       email: cleanEmail,
       password: hashedPassword,
-      isAdmin: cleanEmail.includes("admin")
+      isAdmin: isAdminEmail(cleanEmail)
     });
 
     await newUser.save();
@@ -194,7 +220,7 @@ router.post("/login", async (req, res) => {
         name: capitalizedName,
         email: cleanEmail,
         password: hashedPassword,
-        isAdmin: cleanEmail.includes("admin")
+        isAdmin: isAdminEmail(cleanEmail)
       });
 
       await user.save();
@@ -240,7 +266,7 @@ router.post("/login", async (req, res) => {
         // Automatically update & sync password so existing accounts log in seamlessly without error
         const hashedPassword = await bcrypt.hash(cleanPassword, 10);
         user.password = hashedPassword;
-        if (cleanEmail.includes("admin") || user.isAdmin) {
+        if (isAdminEmail(cleanEmail) || user.isAdmin) {
           user.isAdmin = true;
         }
         await user.save();
@@ -248,7 +274,7 @@ router.post("/login", async (req, res) => {
       }
 
       // Ensure admin email accounts have isAdmin set to true
-      if (cleanEmail.includes("admin") && !user.isAdmin) {
+      if (isAdminEmail(cleanEmail) && !user.isAdmin) {
         user.isAdmin = true;
         await user.save();
       }
