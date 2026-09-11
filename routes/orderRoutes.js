@@ -9,40 +9,26 @@ const Razorpay = require("razorpay");
 
 const crypto = require("crypto");
 
-const nodemailer = require("nodemailer");
-
+const { sendEmail } = require("../config/resend");
 
 // ===============================
-// NODEMAILER CONFIG
+// RESEND EMAIL NOTIFIER
 // ===============================
 
-const transporter = nodemailer.createTransport({
-
-  service: "gmail",
-
-  auth: {
-
-    user: process.env.EMAIL_USER,
-
-    pass: process.env.EMAIL_PASS
-  }
-});
 const safeSendMail = async (mailOptions) => {
-
   try {
-
-    await transporter.sendMail(mailOptions);
-
+    const adminEmail = process.env.ADMIN_EMAIL || "helloearthkindnaturals@gmail.com";
+    await sendEmail({
+      to: mailOptions.to || adminEmail,
+      subject: mailOptions.subject,
+      html: mailOptions.html,
+      text: mailOptions.text
+    });
   } catch (err) {
-
-    console.log(
-      "Email failed:",
-      err.message
-    );
-
+    console.log("Resend Order Email failed:", err.message);
   }
-
 };
+
 
 
 // ===============================
@@ -138,8 +124,7 @@ router.post("/create", async (req, res) => {
             // LOW STOCK EMAIL ALERT
             if (product.stock <= 5) {
               safeSendMail({
-                from: process.env.EMAIL_USER,
-                to: process.env.EMAIL_USER,
+                to: process.env.ADMIN_EMAIL || "helloearthkindnaturals@gmail.com",
                 subject: `⚠ Low Stock Alert - ${product.name}`,
                 html: `
                   <div style="font-family: Arial; padding: 24px; background: #f9fafb;">
@@ -167,13 +152,10 @@ router.post("/create", async (req, res) => {
     // ===============================
 
     safeSendMail({
-
-      from: process.env.EMAIL_USER,
-
-      to: process.env.EMAIL_USER,
-
+      to: process.env.ADMIN_EMAIL || "helloearthkindnaturals@gmail.com",
       subject:
         "🛒 New Order Received - Earthkind Naturals",
+
 
       html: `
 

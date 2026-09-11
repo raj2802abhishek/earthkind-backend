@@ -28,11 +28,34 @@ router.post("/", async (req, res) => {
 
     console.log("📥 New Contact Form Submission Saved to DB:", savedContact._id);
 
+    // Notify admin via Resend (async, non-blocking)
+    const { sendEmail } = require("../config/resend");
+    sendEmail({
+      to: process.env.ADMIN_EMAIL || "helloearthkindnaturals@gmail.com",
+      subject: `📬 New Contact Inquiry: ${subject || "General Inquiry"} - from ${name}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; background: #f9fafb;">
+          <div style="background: #ffffff; border-radius: 16px; padding: 24px; border: 1px solid #e5e7eb; max-width: 540px; margin: auto;">
+            <h2 style="color: #163923; margin-top: 0;">New Contact Form Submission 🌿</h2>
+            <p style="margin: 6px 0;"><strong>Name:</strong> ${name}</p>
+            <p style="margin: 6px 0;"><strong>Email:</strong> ${email}</p>
+            <p style="margin: 6px 0;"><strong>Phone:</strong> ${phone || "N/A"}</p>
+            <p style="margin: 6px 0;"><strong>Subject:</strong> ${subject || "General Inquiry"}</p>
+            <hr style="border: none; border-top: 1px solid #eeeeee; margin: 16px 0;" />
+            <p style="margin: 6px 0;"><strong>Message:</strong></p>
+            <div style="white-space: pre-wrap; background: #f3f4f6; padding: 14px; border-radius: 8px; color: #374151; font-size: 14px;">${message}</div>
+          </div>
+        </div>
+      `,
+      text: `New contact inquiry from ${name} (${email}): ${message}`
+    }).catch(e => console.log("Contact form admin email notification failed:", e.message));
+
     return res.status(201).json({
       success: true,
       message: "Your message has been sent and saved successfully!",
       contact: savedContact,
     });
+
   } catch (error) {
     console.error("❌ Error saving contact message:", error);
     return res.status(500).json({

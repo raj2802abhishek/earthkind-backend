@@ -8,6 +8,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const transporter = require("../config/email");
+const { sendEmail } = require("../config/resend");
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -538,81 +539,46 @@ router.post("/send-otp", async (req, res) => {
 
     await user.save();
 
-    
-
-
-const info = await transporter.sendMail({
-
- from: `"Earthkind Naturals 🌿" <no-reply@earthkindnaturals.shop>`,
-
-  to: email,
-
-  subject:
-    "Verify Your New Email - Earthkind Naturals",
-
-  html: `
-
-    <div style="
-      font-family:Arial;
-      padding:30px;
-      background:#f5f7f4;
-    ">
-
-      <div style="
-        max-width:520px;
-        margin:auto;
-        background:white;
-        border-radius:18px;
-        padding:40px;
-        border:1px solid #e8eee8;
-      ">
-
-        <h1 style="
-          color:#163923;
-          margin-top:0;
-        ">
-          Earthkind Naturals 🌿
-        </h1>
-
-        <p style="
-          font-size:16px;
-          color:#444;
-        ">
-          Your email verification OTP:
-        </p>
-
-        <div style="
-          margin:30px 0;
-          font-size:42px;
-          letter-spacing:10px;
-          font-weight:700;
-          color:#163923;
-          text-align:center;
-        ">
-          ${otp}
+    const emailResult = await sendEmail({
+      to: email,
+      subject: "Your Verification OTP - Earthkind Naturals",
+      html: `
+        <div style="background:#f5f7f4; padding:40px 20px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+          <div style="max-width:520px; margin:auto; background:#ffffff; border-radius:20px; overflow:hidden; border:1px solid #e8eee8; box-shadow:0 4px 20px rgba(0,0,0,0.04);">
+            <div style="background:linear-gradient(135deg, #163923, #285b37); padding:32px; text-align:center; color:#ffffff;">
+              <h1 style="margin:0; font-size:28px; font-weight:700; letter-spacing:0.5px;">Earthkind Naturals 🌿</h1>
+              <p style="margin:8px 0 0 0; opacity:0.9; font-size:14px;">Secure Verification Code</p>
+            </div>
+            <div style="padding:36px 32px;">
+              <p style="font-size:16px; color:#333333; margin-top:0;">Hello,</p>
+              <p style="font-size:15px; color:#555555; line-height:1.6;">
+                Here is your one-time verification code (OTP) for your Earthkind Naturals account:
+              </p>
+              <div style="margin:30px 0; text-align:center;">
+                <div style="display:inline-block; background:#f0f7f1; border:2px dashed #285b37; border-radius:14px; padding:18px 36px; font-size:36px; letter-spacing:8px; font-weight:800; color:#163923; font-family:monospace;">
+                  ${otp}
+                </div>
+              </div>
+              <p style="color:#777777; font-size:13px; line-height:1.5; margin-bottom:20px;">
+                ⏱️ This code is valid for <strong>10 minutes</strong>. If you did not request this OTP, please disregard this email or secure your account.
+              </p>
+              <hr style="border:none; border-top:1px solid #eeeeee; margin:24px 0;" />
+              <p style="font-size:12px; color:#999999; text-align:center; margin:0;">
+                Earthkind Naturals • Pure, Gentle & Sustainable Living
+              </p>
+            </div>
+          </div>
         </div>
+      `,
+      text: `Your Earthkind Naturals verification OTP is: ${otp}. Valid for 10 minutes.`
+    });
 
-        <p style="
-          color:#777;
-          font-size:14px;
-        ">
-          This OTP is valid for 10 minutes.
-        </p>
-
-      </div>
-
-    </div>
-
-  `
-});
-
-console.log(
-  "MAIL SENT SUCCESSFULLY:",
-  info.response
-);
-
-
-
+    if (!emailResult.success) {
+      console.error("Resend OTP delivery failed:", emailResult.error);
+      return res.status(500).json({
+        message: emailResult.error?.message || "Failed to send OTP email"
+      });
+    }
 
     res.json({ message: "OTP sent successfully" });
 
@@ -620,6 +586,7 @@ console.log(
     res.status(500).json({ message: error.message });
   }
 });
+
 
 router.post("/reset-password", async (req, res) => {
   try {
@@ -650,9 +617,43 @@ router.post("/reset-password", async (req, res) => {
 
     await user.save();
 
+    // Send confirmation email via Resend (async, non-blocking)
+    sendEmail({
+      to: email,
+      subject: "Password Reset Successful - Earthkind Naturals",
+      html: `
+        <div style="background:#f5f7f4; padding:40px 20px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+          <div style="max-width:520px; margin:auto; background:#ffffff; border-radius:20px; overflow:hidden; border:1px solid #e8eee8; box-shadow:0 4px 20px rgba(0,0,0,0.04);">
+            <div style="background:linear-gradient(135deg, #163923, #285b37); padding:32px; text-align:center; color:#ffffff;">
+              <h1 style="margin:0; font-size:28px; font-weight:700;">Earthkind Naturals 🌿</h1>
+              <p style="margin:8px 0 0 0; opacity:0.9; font-size:14px;">Account Security Alert</p>
+            </div>
+            <div style="padding:36px 32px;">
+              <p style="font-size:16px; color:#333333; margin-top:0;">Hello ${user.name || "Customer"},</p>
+              <p style="font-size:15px; color:#555555; line-height:1.6;">
+                Your password for Earthkind Naturals has been changed successfully.
+              </p>
+              <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:16px; margin:24px 0; color:#166534; font-size:14px;">
+                ✅ <strong>Status:</strong> Password successfully updated. You can now log in with your new credentials.
+              </div>
+              <p style="color:#777777; font-size:13px; line-height:1.5;">
+                If you did not perform this change, please contact our support immediately at <a href="mailto:helloearthkindnaturals@gmail.com" style="color:#163923; font-weight:600;">helloearthkindnaturals@gmail.com</a>.
+              </p>
+              <hr style="border:none; border-top:1px solid #eeeeee; margin:24px 0;" />
+              <p style="font-size:12px; color:#999999; text-align:center; margin:0;">
+                Earthkind Naturals • Pure, Gentle & Sustainable Living
+              </p>
+            </div>
+          </div>
+        </div>
+      `,
+      text: `Your Earthkind Naturals password has been changed successfully. If you did not do this, please contact support.`
+    }).catch(err => console.log("Password reset confirmation email error:", err.message));
+
     res.json({
       message: "Password reset successful"
     });
+
 
   } catch (error) {
     res.status(500).json({
@@ -978,116 +979,52 @@ router.post(
       console.log("EMAIL OTP:", otp);
 
 
-await transporter.sendMail({
+      const emailResult = await sendEmail({
+        to: email,
+        subject: "Verify Your New Email - Earthkind Naturals",
+        html: `
+          <div style="background:#f5f7f4; padding:40px 20px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <div style="max-width:540px; margin:auto; background:#ffffff; border-radius:24px; overflow:hidden; border:1px solid #e8efe8; box-shadow:0 4px 20px rgba(0,0,0,0.04);">
+              <div style="background:linear-gradient(135deg,#163923,#285b37); padding:35px; text-align:center; color:#ffffff;">
+                <h1 style="margin:0; font-size:30px; font-weight:700;">Earthkind Naturals 🌿</h1>
+                <p style="margin-top:10px; opacity:0.9; font-size:15px;">Secure Email Verification</p>
+              </div>
+              <div style="padding:40px 32px;">
+                <h2 style="color:#163923; margin-top:0; font-size:20px;">Verify Your New Email</h2>
+                <p style="color:#555555; line-height:1.7; font-size:15px;">
+                  Use the verification code below to securely verify and connect this email address to your account.
+                </p>
+                <div style="margin:35px 0; text-align:center;">
+                  <div style="display:inline-block; background:#f0f7f1; border:2px dashed #285b37; border-radius:18px; padding:20px 36px; font-size:36px; letter-spacing:8px; font-weight:800; color:#163923; font-family:monospace;">
+                    ${otp}
+                  </div>
+                </div>
+                <p style="color:#777777; font-size:14px; margin-bottom:20px;">
+                  ⏱️ This OTP expires in <strong>10 minutes</strong>. Never share this code with anyone.
+                </p>
+                <hr style="border:none; border-top:1px solid #eeeeee; margin:24px 0;" />
+                <p style="font-size:12px; color:#999999; text-align:center; margin:0;">
+                  Earthkind Naturals • Pure, Gentle & Sustainable Living
+                </p>
+              </div>
+            </div>
+          </div>
+        `,
+        text: `Your Earthkind Naturals email verification OTP is: ${otp}. Valid for 10 minutes.`
+      });
 
-  from: `"Earthkind Naturals 🌿" <no-reply@earthkindnaturals.shop>`,
-
-  to: email,
-
-  subject: "Verify Your New Email - Earthkind Naturals",
-
-  html: `
-
-  <div style="
-    background:#f5f7f4;
-    padding:40px;
-    font-family:Arial,sans-serif;
-  ">
-
-<div style="
-  max-width:540px;
-  margin:auto;
-  background:#ffffff;
-  border-radius:24px;
-  overflow:hidden;
-  border:1px solid #e8efe8;
-">
-
-  <div style="
-    background:linear-gradient(135deg,#163923,#285b37);
-    padding:35px;
-    text-align:center;
-    color:white;
-  ">
-
-    <h1 style="
-      margin:0;
-      font-size:32px;
-    ">
-      Earthkind Naturals 🌿
-    </h1>
-
-    <p style="
-      margin-top:10px;
-      opacity:.9;
-      font-size:15px;
-    ">
-      Secure Email Verification
-    </p>
-
-  </div>
-
-  <div style="padding:40px;">
-
-    <h2 style="
-      color:#163923;
-      margin-top:0;
-    ">
-      Verify Your New Email
-    </h2>
-
-    <p style="
-      color:#555;
-      line-height:1.7;
-      font-size:15px;
-    ">
-      Use the verification code below
-      to securely verify your account.
-    </p>
-
-    <div style="
-      margin:35px 0;
-      text-align:center;
-    ">
-
-      <div style="
-        display:inline-block;
-        background:#f3f8f3;
-        border:1px solid #dbe8db;
-        border-radius:18px;
-        padding:22px 36px;
-        font-size:42px;
-        letter-spacing:10px;
-        font-weight:700;
-        color:#163923;
-      ">
-        ${otp}
-      </div>
-
-    </div>
-
-    <p style="
-      color:#777;
-      font-size:14px;
-    ">
-      This OTP expires in 10 minutes.
-    </p>
-
-  </div>
-
-</div>
-
-  </div>
-
-`
-});
-
-
+      if (!emailResult.success) {
+        console.error("Resend email change OTP error:", emailResult.error);
+        return res.status(500).json({
+          message: emailResult.error?.message || "Failed to send email verification OTP"
+        });
+      }
 
       return res.json({
         success: true,
         message: "OTP sent successfully"
       });
+
 
     } catch (error) {
 

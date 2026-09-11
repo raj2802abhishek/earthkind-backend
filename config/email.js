@@ -1,36 +1,18 @@
-const nodemailer = require("nodemailer");
+const { sendEmail, getResendClient } = require("./resend");
 
-const transporter = nodemailer.createTransport({
-
-  host: "smtp-relay.brevo.com",
-
-  port: 587,
-
-  secure: false,
-
-  auth: {
-
-    user: process.env.BREVO_SMTP_USER,
-
-    pass: process.env.BREVO_SMTP_PASS
+const transporter = {
+  sendMail: async ({ from, to, subject, html, text }) => {
+    const result = await sendEmail({ from, to, subject, html, text });
+    if (!result.success) {
+      throw new Error(result.error?.message || "Failed to send email via Resend");
+    }
+    return {
+      messageId: result.data?.id,
+      response: `250 Message accepted with ID ${result.data?.id}`
+    };
   }
-});
-
-transporter.verify((error, success) => {
-
-  if (error) {
-
-    console.log(
-      "BREVO EMAIL ERROR:",
-      error
-    );
-
-  } else {
-
-    console.log(
-      "BREVO EMAIL SERVER READY"
-    );
-  }
-});
+};
 
 module.exports = transporter;
+module.exports.sendEmail = sendEmail;
+module.exports.getResendClient = getResendClient;
